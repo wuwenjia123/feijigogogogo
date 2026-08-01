@@ -8,7 +8,105 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css？v=19">
+  <link rel="stylesheet" href="css/style.css?v=20">
+  <!-- ============================================================
+       ✅ 【内嵌兜底CSS】防止 style.css 加载失败时出现你现在的白屏：
+       - Netlify/任何托管把 .css 返回了 404 或 HTML（SPA fallback误配）
+       - 用户缓存、CDN、?v=xx 版本号冲突
+       只要这里内嵌的最小样式在，就算外面 style.css 挂了游戏照样能玩
+       ============================================================ -->
+  <style data-role="critical-fallback">
+    /* ===== 基础重置 & 深色背景（防白屏关键） ===== */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%; overflow: hidden;
+      background: #0a0a1a;  /* 兜底深色背景，白屏时至少是黑的 */
+      color: #ffffff; font-family: 'Rajdhani', 'Orbitron', sans-serif;
+      user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
+    }
+    /* ===== 全屏容器 & 画布（防看不到游戏画面） ===== */
+    #game-container {
+      position: relative; width: 100vw; height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      background: radial-gradient(ellipse at center, #0d0d2b 0%, #050510 100%);
+      overflow: hidden;
+    }
+    #game-canvas {
+      display: block; background: #050510;
+      box-shadow: 0 0 10px #00f0ff, 0 0 20px #00f0ff;
+      border: 1px solid #00f0ff; border-radius: 4px;
+    }
+    /* ===== 屏幕：hidden 必生效（防所有screen同时显示） ===== */
+    .screen {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100; background: rgba(5, 5, 16, 0.92);
+      backdrop-filter: blur(8px);
+    }
+    .hidden { display: none !important; }   /* ← 最关键的一行，你的问题就是这个类没生效 */
+    /* ===== 菜单内容居中 ===== */
+    .menu-content { text-align: center; padding: 40px; max-width: 480px; width: 90%; }
+    .game-title {
+      font-family: 'Orbitron', sans-serif; font-size: clamp(32px, 8vw, 64px);
+      font-weight: 900; letter-spacing: 4px; color: #00f0ff;
+      text-shadow: 0 0 10px #00f0ff, 0 0 20px #00f0ff, 0 0 40px #00f0ff;
+      margin-bottom: 10px;
+    }
+    .game-subtitle {
+      font-size: clamp(16px, 4vw, 22px); color: #bf00ff;
+      text-shadow: 0 0 8px #bf00ff; letter-spacing: 3px; margin-bottom: 30px;
+    }
+    /* ===== 按钮样式（让它们看起来像按钮，不是一行文字） ===== */
+    .menu-btn {
+      position: relative; padding: 12px 28px; min-width: 160px; font-size: 16px;
+      font-weight: 700; letter-spacing: 2px; color: #ffffff;
+      background: linear-gradient(135deg, #1a1a3a 0%, #2a2a5a 100%);
+      border: 2px solid #00f0ff; border-radius: 4px; cursor: pointer;
+      transition: all 0.2s ease; overflow: hidden; margin: 4px;
+    }
+    .menu-btn:hover, .menu-btn:active {
+      background: linear-gradient(135deg, #00f0ff 0%, #00a0c8 100%);
+      color: #050510; box-shadow: 0 0 10px #00f0ff, 0 0 20px #00f0ff; transform: translateY(-2px);
+    }
+    .menu-buttons { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+    .screen-title {
+      font-family: 'Orbitron', sans-serif; font-size: 36px; font-weight: 900;
+      letter-spacing: 4px; color: #ff0066; text-shadow: 0 0 10px #ff0066, 0 0 20px #ff0066;
+      margin-bottom: 24px;
+    }
+    /* ===== 顶部 HUD 不让文字堆叠到一起 ===== */
+    #hud { position: absolute; top: 0; left: 0; width: 100%; padding: 12px 20px; z-index: 50; pointer-events: none; }
+    .hud-top { display: flex; justify-content: space-between; align-items: flex-start; }
+    .hud-left { display: flex; flex-direction: column; gap: 8px; }
+    .hud-center { text-align: center; }
+    .hud-right { text-align: right; display: flex; flex-direction: column; gap: 6px; }
+    .hud-score-label { font-size: 12px; color: #a0a0c0; letter-spacing: 3px; }
+    .hud-score { font-family: 'Orbitron', sans-serif; font-size: 32px; font-weight: 700; color: #00f0ff; }
+    .hud-level { font-family: 'Orbitron', sans-serif; font-size: 14px; color: #ffcc00; letter-spacing: 2px; }
+    .hud-bottom { position: absolute; bottom: 12px; left: 20px; right: 20px; display: flex; align-items: center; gap: 16px; }
+    .weapon-name { font-size: 14px; color: #00ff88; font-weight: 700; letter-spacing: 2px; }
+    .weapon-level { font-size: 12px; color: #a0a0c0; }
+    .energy-bar { width: 200px; height: 10px; background: #1a1a3a; border: 1px solid #00f0ff; border-radius: 5px; overflow: hidden; }
+    .energy-fill { height: 100%; background: linear-gradient(90deg, #00f0ff, #bf00ff); transition: width 0.2s; }
+    .energy-label { font-size: 10px; color: #a0a0c0; letter-spacing: 2px; margin-top: 2px; }
+    #boss-hp-container { position: absolute; top: 50px; left: 50%; transform: translateX(-50%); width: 60%; max-width: 400px; z-index: 60; text-align: center; }
+    .boss-name { font-size: 14px; color: #ff0066; font-weight: 700; letter-spacing: 3px; margin-bottom: 4px; }
+    .boss-hp-bar { height: 12px; background: #1a1a3a; border: 2px solid #ff0066; border-radius: 6px; overflow: hidden; box-shadow: 0 0 10px rgba(255,0,102,.5); }
+    .boss-hp-fill { height: 100%; background: linear-gradient(90deg, #ff0066, #ff6699); transition: width 0.2s; }
+    /* ===== 其他文字元素：分数/关卡/credit 不会错位 ===== */
+    .high-score { text-align: center; margin: 20px 0; font-size: 18px; color: #ffcc00; }
+    .high-score .label { color: #a0a0c0; font-size: 14px; letter-spacing: 2px; display: block; margin-bottom: 4px; }
+    #game-banner { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 200; }
+    .banner-inner { padding: 10px 20px; border-radius: 4px; font-weight: 700; letter-spacing: 2px; }
+    .banner-debug .banner-inner { background: rgba(0,240,255,.15); border: 2px solid #00f0ff; color: #00f0ff; }
+    .banner-warn .banner-inner { background: rgba(255,204,0,.15); border: 2px solid #ffcc00; color: #ffcc00; }
+    .banner-err .banner-inner { background: rgba(255,0,102,.15); border: 2px solid #ff0066; color: #ff0066; }
+    /* ===== stats 面板不让文字堆 ===== */
+    .stats-panel { text-align: center; margin: 20px 0; }
+    .stat-row { display: flex; justify-content: space-between; padding: 8px 16px; border-bottom: 1px solid #3a3a6a; }
+    .stat-label { color: #a0a0c0; }
+    .stat-value { color: #00f0ff; font-weight: 700; }
+  </style>
 </head>
 <body>
   <div id="game-container">
@@ -290,21 +388,21 @@
     <div id="fps-display" class="hidden">FPS: 60</div>
   </div>
   
-  <script src="js/utils.js?v=19"></script>
-  <script src="js/input.js?v=19"></script>
-  <script src="js/audio.js?v=19"></script>
-  <script src="js/particle.js?v=19"></script>
-  <script src="js/bullet.js?v=19"></script>
-  <script src="js/powerup.js?v=19"></script>
-  <script src="js/player.js?v=19"></script>
-  <script src="js/shop.js?v=19"></script>
-  <script src="js/enemy.js?v=19"></script>
-  <script src="js/boss.js?v=19"></script>
-  <script src="js/collision.js?v=19"></script>
-  <script src="js/level.js?v=19"></script>
-  <script src="js/renderer.js?v=19"></script>
-  <script src="js/ui.js?v=19"></script>
-  <script src="js/game.js?v=19"></script>
-  <script src="js/main.js?v=19"></script>
+  <script src="js/utils.js?v=20"></script>
+  <script src="js/input.js?v=20"></script>
+  <script src="js/audio.js?v=20"></script>
+  <script src="js/particle.js?v=20"></script>
+  <script src="js/bullet.js?v=20"></script>
+  <script src="js/powerup.js?v=20"></script>
+  <script src="js/player.js?v=20"></script>
+  <script src="js/shop.js?v=20"></script>
+  <script src="js/enemy.js?v=20"></script>
+  <script src="js/boss.js?v=20"></script>
+  <script src="js/collision.js?v=20"></script>
+  <script src="js/level.js?v=20"></script>
+  <script src="js/renderer.js?v=20"></script>
+  <script src="js/ui.js?v=20"></script>
+  <script src="js/game.js?v=20"></script>
+  <script src="js/main.js?v=20"></script>
 </body>
 </html>

@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>飞机大战 - CYBER FIGHTER</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="game-canvas"></canvas>
+    
+    <div id="hud" class="hidden">
+      <div class="hud-top">
+        <div class="hud-left">
+          <div class="hud-lives" id="hud-lives"></div>
+          <div class="hud-bombs" id="hud-bombs"></div>
+        </div>
+        <div class="hud-center">
+          <div class="hud-score-label">SCORE</div>
+          <div class="hud-score" id="hud-score">0</div>
+        </div>
+        <div class="hud-right">
+          <div class="hud-level" id="hud-level">STAGE 1</div>
+          <div class="hud-combo" id="hud-combo"></div>
+        </div>
+      </div>
+      
+      <div class="hud-bottom">
+        <div class="hud-weapon">
+          <div class="weapon-name" id="weapon-name">LASER</div>
+          <div class="weapon-level" id="weapon-level">Lv.1</div>
+        </div>
+        <div class="hud-energy">
+          <div class="energy-bar">
+            <div class="energy-fill" id="energy-fill"></div>
+          </div>
+          <div class="energy-label">ENERGY</div>
+        </div>
+      </div>
+      
+      <div id="boss-hp-container" class="hidden">
+        <div class="boss-name" id="boss-name">BOSS</div>
+        <div class="boss-hp-bar">
+          <div class="boss-hp-fill" id="boss-hp-fill"></div>
+        </div>
+      </div>
+    </div>
+    
+    <div id="menu-screen" class="screen">
+      <div class="menu-content">
+        <h1 class="game-title glitch" data-text="CYBER FIGHTER">
+          <span>CYBER</span>
+          <span class="title-accent">FIGHTER</span>
+        </h1>
+        <p class="game-subtitle">飞 机 大 战</p>
+        
+        <div class="menu-buttons">
+          <button class="menu-btn primary" data-action="start">
+            <span class="btn-icon">▶</span>
+            <span class="btn-text">开始游戏</span>
+          </button>
+          <button class="menu-btn" data-action="levelSelect">
+            <span class="btn-icon">📋</span>
+            <span class="btn-text">关卡选择</span>
+          </button>
+          <button class="menu-btn" data-action="shop">
+            <span class="btn-icon">🛒</span>
+            <span class="btn-text">武器商店</span>
+          </button>
+          <button class="menu-btn" data-action="settings">
+            <span class="btn-icon">⚙</span>
+            <span class="btn-text">游戏设置</span>
+          </button>
+          <button class="menu-btn" data-action="testGogogo">
+            <span class="btn-icon">🎵</span>
+            <span class="btn-text">试听 出发喽 音效</span>
+          </button>
+        </div>
+        
+        <div class="high-score-display">
+          <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+            <div><span class="hs-label">HIGH SCORE</span>
+            <span class="hs-value" id="menu-high-score">0</span></div>
+            <div><span class="hs-label" style="color: #ffcc00;">CREDITS</span>
+            <span class="hs-value" id="menu-credits" style="color: #ffcc00;">0</span></div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="scanlines"></div>
+    </div>
+    
+    <div id="pause-screen" class="screen hidden">
+      <div class="menu-content">
+        <h2 class="screen-title">PAUSED</h2>
+        <div class="menu-buttons">
+          <button class="menu-btn primary" data-action="resume">
+            <span class="btn-icon">▶</span>
+            <span class="btn-text">继续游戏</span>
+          </button>
+          <button class="menu-btn" data-action="restart">
+            <span class="btn-icon">↻</span>
+            <span class="btn-text">重新开始</span>
+          </button>
+          <button class="menu-btn" data-action="menu">
+            <span class="btn-icon">🏠</span>
+            <span class="btn-text">返回主菜单</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div id="gameover-screen" class="screen hidden">
+      <div class="menu-content">
+        <h2 class="screen-title game-over-title">GAME OVER</h2>
+        <div class="result-stats">
+          <div class="stat-row">
+            <span class="stat-label">最终分数</span>
+            <span class="stat-value" id="final-score">0</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">最高连击</span>
+            <span class="stat-value" id="final-combo">0</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">击毁敌机</span>
+            <span class="stat-value" id="final-kills">0</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">历史最高</span>
+            <span class="stat-value" id="final-high-score">0</span>
+          </div>
+          <div class="stat-row rating-row">
+            <span class="stat-label">评级</span>
+            <span class="stat-value rating" id="final-rating">-</span>
+          </div>
+        </div>
+        <div class="menu-buttons">
+          <button class="menu-btn primary" data-action="restart">
+            <span class="btn-icon">↻</span>
+            <span class="btn-text">再玩一次</span>
+          </button>
+          <button class="menu-btn" data-action="menu">
+            <span class="btn-icon">🏠</span>
+            <span class="btn-text">返回主菜单</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div id="victory-screen" class="screen hidden">
+      <div class="menu-content">
+        <h2 class="screen-title victory-title">STAGE CLEAR!</h2>
+        <div class="result-stats">
+          <div class="stat-row">
+            <span class="stat-label">最终分数</span>
+            <span class="stat-value" id="victory-score">0</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">最高连击</span>
+            <span class="stat-value" id="victory-combo">0</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">击毁敌机</span>
+            <span class="stat-value" id="victory-kills">0</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">用时</span>
+            <span class="stat-value" id="victory-time">00:00</span>
+          </div>
+          <div class="stat-row rating-row">
+            <span class="stat-label">评级</span>
+            <span class="stat-value rating" id="victory-rating">-</span>
+          </div>
+        </div>
+        <div class="menu-buttons">
+          <button class="menu-btn primary" data-action="nextLevel">
+            <span class="btn-icon">▶</span>
+            <span class="btn-text">下一关</span>
+          </button>
+          <button class="menu-btn" data-action="restart">
+            <span class="btn-icon">↻</span>
+            <span class="btn-text">重玩本关</span>
+          </button>
+          <button class="menu-btn" data-action="menu">
+            <span class="btn-icon">🏠</span>
+            <span class="btn-text">返回主菜单</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div id="level-select-screen" class="screen hidden">
+      <div class="menu-content">
+        <h2 class="screen-title">SELECT STAGE</h2>
+        <div class="level-grid" id="level-grid"></div>
+        <div class="menu-buttons">
+          <button class="menu-btn" data-action="menu">
+            <span class="btn-icon">←</span>
+            <span class="btn-text">返回</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div id="settings-screen" class="screen hidden">
+      <div class="menu-content">
+        <h2 class="screen-title">SETTINGS</h2>
+        <div class="settings-group">
+          <div class="setting-item">
+            <span class="setting-label">难度</span>
+            <div class="setting-options" id="difficulty-options">
+              <button class="option-btn" data-value="EASY">简单</button>
+              <button class="option-btn active" data-value="NORMAL">普通</button>
+              <button class="option-btn" data-value="HARD">困难</button>
+            </div>
+          </div>
+          <div class="setting-item">
+            <span class="setting-label">背景音乐</span>
+            <div class="setting-slider">
+              <input type="range" id="bgm-volume" min="0" max="100" value="70">
+              <span class="slider-value" id="bgm-value">70%</span>
+            </div>
+          </div>
+          <div class="setting-item">
+            <span class="setting-label">音效</span>
+            <div class="setting-slider">
+              <input type="range" id="sfx-volume" min="0" max="100" value="88">
+              <span class="slider-value" id="sfx-value">88%</span>
+            </div>
+          </div>
+          <div class="setting-item">
+            <span class="setting-label">显示FPS</span>
+            <div class="setting-toggle">
+              <label class="toggle-switch">
+                <input type="checkbox" id="show-fps">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="menu-buttons">
+          <button class="menu-btn primary" data-action="menu">
+            <span class="btn-icon">✓</span>
+            <span class="btn-text">确定</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div id="shop-screen" class="screen hidden">
+      <div class="menu-content shop-content">
+        <h2 class="screen-title">🛒 武器商店</h2>
+        <div class="shop-header">
+          <div class="shop-credits">
+            <span class="credits-label">💰 积分</span>
+            <span class="credits-value" id="shop-credits">0</span>
+          </div>
+          <div class="shop-tabs">
+            <button class="shop-tab active" data-tab="weapons">武器</button>
+            <button class="shop-tab" data-tab="ships">战舰</button>
+          </div>
+        </div>
+        <div class="shop-list" id="shop-list"></div>
+        <div class="shop-footer">
+          <div class="shop-hint" id="shop-hint">选择武器或战舰进行购买/装备</div>
+          <button class="menu-btn" data-action="menu">
+            <span class="btn-icon">←</span>
+            <span class="btn-text">返回</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div id="warning-overlay" class="hidden">
+      <div class="warning-text">⚠ WARNING ⚠</div>
+    </div>
+
+    <div id="game-banner" class="hidden">
+      <div class="banner-inner">
+        <div class="banner-text" id="game-banner-text">出发喽</div>
+      </div>
+    </div>
+    
+    <div id="fps-display" class="hidden">FPS: 60</div>
+  </div>
+  
+  <script src="js/utils.js?v=19"></script>
+  <script src="js/input.js?v=19"></script>
+  <script src="js/audio.js?v=19"></script>
+  <script src="js/particle.js?v=19"></script>
+  <script src="js/bullet.js?v=19"></script>
+  <script src="js/powerup.js?v=19"></script>
+  <script src="js/player.js?v=19"></script>
+  <script src="js/shop.js?v=19"></script>
+  <script src="js/enemy.js?v=19"></script>
+  <script src="js/boss.js?v=19"></script>
+  <script src="js/collision.js?v=19"></script>
+  <script src="js/level.js?v=19"></script>
+  <script src="js/renderer.js?v=19"></script>
+  <script src="js/ui.js?v=19"></script>
+  <script src="js/game.js?v=19"></script>
+  <script src="js/main.js?v=19"></script>
+</body>
+</html>

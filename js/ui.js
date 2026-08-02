@@ -34,7 +34,11 @@ class UIManager {
       energyFill: document.getElementById('energy-fill'),
       bossHpContainer: document.getElementById('boss-hp-container'),
       bossName: document.getElementById('boss-name'),
-      bossHpFill: document.getElementById('boss-hp-fill')
+      bossHpFill: document.getElementById('boss-hp-fill'),
+      // ===== 新增：BOSS 出现进度条 =====
+      bossComingContainer: document.getElementById('boss-coming-container'),
+      bossComingFill: document.getElementById('boss-coming-fill'),
+      bossComingPercent: document.getElementById('boss-coming-percent')
     };
     
     this.shopState = {
@@ -68,6 +72,14 @@ class UIManager {
     if (this.hud.container) {
       this.hud.container.classList.remove('hidden');
     }
+    // ===== 【防空白补丁】HUD一显示就立刻强制刷新所有 HUD 元素 =====
+    // 避免因为时序问题（player还没初始化/继续游戏）导致心脏/炸弹/武器是空的
+    try { this.updateLives();   } catch (_) {}
+    try { this.updateBombs();   } catch (_) {}
+    try { this.updateWeapon();  } catch (_) {}
+    try { this.updateEnergy();  } catch (_) {}
+    try { this.updateCombo();   } catch (_) {}
+    try { this.updateScore(this.game ? (this.game.score || 0) : 0); } catch (_) {}
   }
 
   hideHUD() {
@@ -83,14 +95,26 @@ class UIManager {
   }
 
   updateLives() {
-    if (!this.hud.lives || !this.game.player) return;
-    
-    let html = '';
-    for (let i = 0; i < this.game.player.maxHp; i++) {
-      const active = i < this.game.player.hp;
-      html += `<span class="life-icon" style="opacity: ${active ? 1 : 0.2}">♥</span>`;
+    // ===== 【防空白补丁】即使 player 还没初始化，也先渲染默认 5 颗心（避免 huds-lives 空的看不见） =====
+    const hasPlayer = !!(this.game && this.game.player);
+    const hpRaw = hasPlayer ? this.game.player.hp : 5;
+    const maxHpRaw = hasPlayer ? this.game.player.maxHp : 5;
+    const hp = Math.max(0, Number(hpRaw || 0));
+    const maxHp = Math.max(1, Number(maxHpRaw || hp || 1));
+
+    if (!this.hud.lives) return;
+
+    let heartsHtml = '';
+    for (let i = 0; i < maxHp; i++) {
+      const active = i < hp;
+      // 实心大心❤，死了变空心♡ + 降透明度
+      heartsHtml += `<span class="life-icon ${active ? 'alive' : 'dead'}">${active ? '❤' : '♡'}</span>`;
     }
-    this.hud.lives.innerHTML = html;
+    // 数字：红色加粗 xHP/maxHP
+    this.hud.lives.innerHTML = `
+      <div class="life-hearts">${heartsHtml}</div>
+      <div class="life-count">× ${hp} / ${maxHp}</div>
+    `;
   }
 
   updateBombs() {
@@ -137,6 +161,64 @@ class UIManager {
     
     const percent = (this.game.player.charge / this.game.player.maxCharge) * 100;
     this.hud.energyFill.style.width = `${percent}%`;
+  }
+
+  // ===== 新增：BOSS 出现进度条 =====
+  /**
+   * 更新 BOSS 出现进度
+   * @param {number} progressPercent 0~100
+   *   - <0 或 >=100 或没有 bossEntryTime 时自动隐藏
+   *   - 建议从 level.update() 调用： progressPercent = levelTime / bossEntryTime * 100
+   */
+  updateBossComingProgress(progressPercent) {
+    if (!this.hud.bossComingContainer || !this.hud.bossComingFill) return;
+
+    const p = Number(progressPercent || 0);
+    const clamped = Math.max(0, Math.min(100, p));
+
+    // ===== 显示/隐藏策略： =====
+    // 进度在 2%~99% 之间才显示（刚开始关卡就显示的话0%没意义，快到100%才显示）
+    // 超过 100% 或 <0 就隐藏（Boss 已出现或还没到 bossEntryTime / 关卡数据无 boss）
+    if (clamped < 2 || clamped >= 99.9) {
+      this.hideBossComing();
+      return;
+    }
+
+    // 显示进度条
+    if (this.hud.bossComingContainer.classList.contains('hidden')) {
+      this.hud.bossComingContainer.classList.remove('hidden');
+    }
+    // 填充宽度
+    this.hud.bossComingFill.style.width = `${clamped}%`;
+    // 百分比文字（整数）
+    if (this.hud.bossComingPercent) {
+      this.hud.bossComingPercent.textContent = `${Math.floor(clamped)}%`;
+    }
+    // 脉冲高亮：接近 80% 时变红闪烁
+    if (clamped >= 80) {
+      this.hud.bossComingContainer.classList.add('danger');
+    } else {
+      this.hud.bossComingContainer.classList.remove('danger');
+    }
+  }
+
+  showBossComing() {
+    if (this.hud.bossComingContainer) {
+      this.hud.bossComingContainer.classList.remove('hidden');
+    }
+  }
+
+  hideBossComing() {
+    if (this.hud.bossComingContainer) {
+      this.hud.bossComingContainer.classList.add('hidden');
+      this.hud.bossComingContainer.classList.remove('danger');
+    }
+    if (this.hud.bossComingFill) {
+      this.hud.bossComingFill.style.width = '0%';
+    }
+    if (this.hud.bossComingPercent) {
+      this.hud.bossComingPercent.textContent = '0%';
+    }
   }
 
   showBossWarning() {

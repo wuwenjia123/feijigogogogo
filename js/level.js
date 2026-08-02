@@ -346,6 +346,10 @@ class LevelManager {
     if (level) {
       this.game.ui.updateLevel(level.id, level.name);
     }
+    // ===== 新关卡开始，先隐藏 BOSS 出现进度条 =====
+    if (this.game.ui && typeof this.game.ui.hideBossComing === 'function') {
+      this.game.ui.hideBossComing();
+    }
     
     this.initBackground(level ? level.background : 'blue_sky');
     this.initParticles(level ? level.background : 'blue_sky');
@@ -444,6 +448,14 @@ class LevelManager {
       }
     }
     
+    // ====== BOSS 出现进度条（按关卡时间比例） ======
+    if (!this.bossSpawned && level.bossEntryTime > 0) {
+      const progress = (this.levelTime / level.bossEntryTime) * 100;
+      if (this.game.ui && typeof this.game.ui.updateBossComingProgress === 'function') {
+        this.game.ui.updateBossComingProgress(progress);
+      }
+    }
+    
     // ====== Boss 出场前 1 秒：字幕+语音+倒计时 ======
     if (!this.bossSpawned && !this._bossWarned && this.levelTime >= level.bossEntryTime - 1000) {
       this._bossWarned = true;
@@ -463,6 +475,10 @@ class LevelManager {
     if (!this.bossSpawned && this.levelTime >= level.bossEntryTime) {
       this.spawnBoss(level.boss);
       this.bossSpawned = true;
+      // ===== Boss 出现后立刻隐藏进度条 =====
+      if (this.game.ui && typeof this.game.ui.hideBossComing === 'function') {
+        this.game.ui.hideBossComing();
+      }
     }
     
     this.backgroundLayers.forEach((layer) => {

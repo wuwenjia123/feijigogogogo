@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=20">
+  <link rel="stylesheet" href="css/style.css?v=22">
   <!-- ============================================================
        ✅ 【内嵌兜底CSS】防止 style.css 加载失败时出现你现在的白屏：
        - Netlify/任何托管把 .css 返回了 404 或 HTML（SPA fallback误配）
@@ -89,6 +89,23 @@
     .energy-bar { width: 200px; height: 10px; background: #1a1a3a; border: 1px solid #00f0ff; border-radius: 5px; overflow: hidden; }
     .energy-fill { height: 100%; background: linear-gradient(90deg, #00f0ff, #bf00ff); transition: width 0.2s; }
     .energy-label { font-size: 10px; color: #a0a0c0; letter-spacing: 2px; margin-top: 2px; }
+    /* ===== 左上角：生命心脏 + 数字 ===== */
+    .hud-lives { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+    .life-hearts { display: flex; gap: 3px; align-items: center; }
+    .life-icon { width: 22px; height: 22px; font-size: 22px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
+    .life-icon.alive { color: #ff0066; text-shadow: 0 0 8px #ff0066, 0 0 14px #ff0066; }
+    .life-icon.dead { color: #4a2233; opacity: 0.55; }
+    .life-count { font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 14px; color: #ff0066; text-shadow: 0 0 6px #ff0066; letter-spacing: 1px; }
+    /* ===== BOSS COMING 进度条 ===== */
+    #boss-coming-container { margin-top: 6px; width: 260px; max-width: 48vw; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .boss-coming-label { font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 12px; letter-spacing: 3px; color: #ffcc00; text-shadow: 0 0 6px #ffcc00; display: inline-flex; align-items: center; gap: 6px; }
+    .boss-coming-spark { color: #ff0066; text-shadow: 0 0 6px #ff0066; }
+    #boss-coming-percent { color: #ffffff; text-shadow: 0 0 4px #ffffff; margin-left: 2px; }
+    .boss-coming-bar { width: 100%; height: 8px; background: rgba(26,26,58,.85); border: 1px solid #ffcc00; border-radius: 4px; overflow: hidden; box-shadow: 0 0 8px rgba(255,204,0,.4); }
+    .boss-coming-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #ffcc00, #ff0066); box-shadow: 0 0 6px #ffcc00; transition: width 0.3s linear; }
+    #boss-coming-container.danger .boss-coming-label { color: #ff0066; text-shadow: 0 0 10px #ff0066; }
+    #boss-coming-container.danger .boss-coming-bar { border-color: #ff0066; box-shadow: 0 0 12px rgba(255,0,102,.6); }
+    #boss-coming-container.danger .boss-coming-fill { background: linear-gradient(90deg, #ffcc00, #ff3366); }
     #boss-hp-container { position: absolute; top: 50px; left: 50%; transform: translateX(-50%); width: 60%; max-width: 400px; z-index: 60; text-align: center; }
     .boss-name { font-size: 14px; color: #ff0066; font-weight: 700; letter-spacing: 3px; margin-bottom: 4px; }
     .boss-hp-bar { height: 12px; background: #1a1a3a; border: 2px solid #ff0066; border-radius: 6px; overflow: hidden; box-shadow: 0 0 10px rgba(255,0,102,.5); }
@@ -121,6 +138,18 @@
         <div class="hud-center">
           <div class="hud-score-label">SCORE</div>
           <div class="hud-score" id="hud-score">0</div>
+          <!-- ===== BOSS 出现进度条（BOSS COMING 37%） ===== -->
+          <div id="boss-coming-container" class="hidden">
+            <div class="boss-coming-label">
+              <span class="boss-coming-spark">⚠</span>
+              BOSS COMING
+              <span id="boss-coming-percent">0%</span>
+              <span class="boss-coming-spark">⚠</span>
+            </div>
+            <div class="boss-coming-bar">
+              <div class="boss-coming-fill" id="boss-coming-fill"></div>
+            </div>
+          </div>
         </div>
         <div class="hud-right">
           <div class="hud-level" id="hud-level">STAGE 1</div>
@@ -388,21 +417,21 @@
     <div id="fps-display" class="hidden">FPS: 60</div>
   </div>
   
-  <script src="js/utils.js?v=20"></script>
-  <script src="js/input.js?v=20"></script>
-  <script src="js/audio.js?v=20"></script>
-  <script src="js/particle.js?v=20"></script>
-  <script src="js/bullet.js?v=20"></script>
-  <script src="js/powerup.js?v=20"></script>
-  <script src="js/player.js?v=20"></script>
-  <script src="js/shop.js?v=20"></script>
-  <script src="js/enemy.js?v=20"></script>
-  <script src="js/boss.js?v=20"></script>
-  <script src="js/collision.js?v=20"></script>
-  <script src="js/level.js?v=20"></script>
-  <script src="js/renderer.js?v=20"></script>
-  <script src="js/ui.js?v=20"></script>
-  <script src="js/game.js?v=20"></script>
-  <script src="js/main.js?v=20"></script>
+  <script src="js/utils.js?v=22"></script>
+  <script src="js/input.js?v=22"></script>
+  <script src="js/audio.js?v=22"></script>
+  <script src="js/particle.js?v=22"></script>
+  <script src="js/bullet.js?v=22"></script>
+  <script src="js/powerup.js?v=22"></script>
+  <script src="js/player.js?v=22"></script>
+  <script src="js/shop.js?v=22"></script>
+  <script src="js/enemy.js?v=22"></script>
+  <script src="js/boss.js?v=22"></script>
+  <script src="js/collision.js?v=22"></script>
+  <script src="js/level.js?v=22"></script>
+  <script src="js/renderer.js?v=22"></script>
+  <script src="js/ui.js?v=22"></script>
+  <script src="js/game.js?v=22"></script>
+  <script src="js/main.js?v=22"></script>
 </body>
 </html>

@@ -44,6 +44,16 @@ html, body {
   overflow: hidden;
 }
 
+/* ==================== 游戏舞台：尺寸 == canvas 实际尺寸，作为 HUD/警告层 的定位上下文 ====================
+   这样 #hud / #warning-overlay / #game-banner 的 width:100% 永远等于 canvas 宽，
+   不会像以前那样相对于 100vw 全屏定位 → 溢出被窗口裁掉看不到心脏❤的问题彻底解决 */
+#game-stage {
+  position: relative;
+  display: inline-block;  /* 关键：inline-block 的宽高完全等于内部 <canvas> 的实际渲染尺寸 */
+  line-height: 0;        /* 消除 inline 元素的底部 4px 基线空隙 */
+  border-radius: 4px;
+}
+
 #game-canvas {
   display: block;
   background: #050510;
@@ -335,14 +345,16 @@ html, body {
 #hud {
   position: absolute;
   top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 480px;
+  left: 0;
+  width: 100%;     /* 现在 100% == canvas 宽度，不是浏览器 viewport 宽度！ */
+  height: 100%;    /* 高度也等于 canvas 高度 */
   pointer-events: none;
   z-index: 50;
-  padding: 12px 16px;
+  padding: 12px 14px;
   font-family: 'Orbitron', sans-serif;
+  /* ===== 旧的定位（造成心脏溢出被裁）已全部删除：
+       - left:50% / transform:translateX(-50%) / max-width:480px
+       不再需要，因为 #hud 的父 #game-stage 尺寸已经 == canvas 尺寸 */
 }
 
 .hud-top {
@@ -381,28 +393,67 @@ html, body {
 
 .hud-lives {
   display: flex;
+  flex-direction: column;   /* 改成竖排：上面一排大心❤，下面一行数字 × hp/maxHp */
+  align-items: flex-start;
   gap: 4px;
 }
 
+.life-hearts {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
 .life-icon {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   color: var(--red);
-  text-shadow: 0 0 8px var(--red);
-  font-size: 16px;
+  text-shadow: 0 0 8px var(--red), 0 0 14px var(--red);
+  font-size: 22px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, text-shadow 0.2s ease;
+}
+.life-icon.alive {
+  color: var(--red);
+  animation: heartbeat 1.2s ease-in-out infinite;
+}
+.life-icon.dead {
+  color: #4a2233;        /* 空心♡ 暗灰红 */
+  text-shadow: none;
+  opacity: 0.55;
+}
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  20%      { transform: scale(1.2); }
+  40%      { transform: scale(0.95); }
+  60%      { transform: scale(1.12); }
+  80%      { transform: scale(0.98); }
+}
+
+.life-count {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--red);
+  text-shadow: 0 0 6px var(--red);
+  letter-spacing: 1px;
 }
 
 .hud-bombs {
   display: flex;
   gap: 4px;
+  align-items: center;
 }
 
 .bomb-icon {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   color: var(--gold);
   text-shadow: 0 0 8px var(--gold);
-  font-size: 14px;
+  font-size: 18px;
 }
 
 .hud-level {
@@ -532,6 +583,88 @@ html, body {
   background: linear-gradient(90deg, var(--red), #ff6699);
   box-shadow: 0 0 10px var(--red);
   transition: width 0.3s ease;
+}
+
+/* ===== BOSS COMING 出现进度条（屏幕正中央分数下方） ===== */
+#boss-coming-container {
+  margin-top: 6px;
+  width: 260px;
+  max-width: 48vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.boss-coming-label {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 3px;
+  color: var(--gold);
+  text-shadow: 0 0 6px var(--gold);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.boss-coming-spark {
+  color: var(--red);
+  text-shadow: 0 0 6px var(--red);
+  animation: sparkPulse 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes sparkPulse {
+  from { transform: scale(0.9); opacity: 0.6; }
+  to   { transform: scale(1.25); opacity: 1; }
+}
+
+#boss-coming-percent {
+  color: #ffffff;
+  text-shadow: 0 0 4px #ffffff;
+  margin-left: 2px;
+}
+
+.boss-coming-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(26, 26, 58, 0.85);
+  border: 1px solid var(--gold);
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 0 8px rgba(255, 204, 0, 0.4);
+}
+
+.boss-coming-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--gold), var(--red));
+  box-shadow: 0 0 6px var(--gold);
+  transition: width 0.3s linear;
+}
+
+/* 危险模式：进度 >= 80% 变红脉冲 */
+#boss-coming-container.danger .boss-coming-label {
+  color: var(--red);
+  text-shadow: 0 0 10px var(--red);
+  animation: labelDanger 0.4s ease-in-out infinite alternate;
+}
+#boss-coming-container.danger .boss-coming-bar {
+  border-color: var(--red);
+  box-shadow: 0 0 12px rgba(255, 0, 102, 0.6);
+  animation: barDanger 0.35s ease-in-out infinite alternate;
+}
+#boss-coming-container.danger .boss-coming-fill {
+  background: linear-gradient(90deg, #ffcc00, #ff3366);
+}
+
+@keyframes labelDanger {
+  from { opacity: 0.85; transform: translateY(0); }
+  to   { opacity: 1; transform: translateY(-1px); }
+}
+@keyframes barDanger {
+  from { box-shadow: 0 0 6px rgba(255,0,102,.5); }
+  to   { box-shadow: 0 0 16px rgba(255,0,102,.9); }
 }
 
 #warning-overlay {

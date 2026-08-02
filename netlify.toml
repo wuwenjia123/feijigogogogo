@@ -1,7 +1,14 @@
 # Netlify 部署配置 —— 飞机大战（纯静态，非SPA）
+# 核心：不要配 SPA fallback（/* /index.html 200），否则 CSS/JS/MP3 会被重定向到 HTML 导致白屏
 [build]
+  # 发布目录 = 项目根目录（因为 index.html 就在根目录）
+  # 部署时在 Netlify 后台 Build & deploy → Settings 里：
+  #   Build command:  (留空，不需要编译)
+  #   Publish directory: .    ← 必须写一个点，表示根目录！不要写成 css/ 或其他子目录
   publish = "."
 
+# ============ 头信息 & 缓存策略 ============
+# 配合我们用的 ?v=123 版本号做永久缓存（max-age=1年，immutable），清缓存只改版本号
 [[headers]]
   for = "/*.css"
   [headers.values]
@@ -31,6 +38,37 @@
     Accept-Ranges = "bytes"
 
 [[headers]]
+  for = "/*.wav"
+  [headers.values]
+    Content-Type = "audio/wav"
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.ogg"
+  [headers.values]
+    Content-Type = "audio/ogg"
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.png"
+  [headers.values]
+    Content-Type = "image/png"
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.jpg"
+  [headers.values]
+    Content-Type = "image/jpeg"
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.svg"
+  [headers.values]
+    Content-Type = "image/svg+xml"
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# index.html 本身不要长缓存！每次部署都要能拿到新 HTML（带新的 ?v=xxx 版本号）
+[[headers]]
   for = "/index.html"
   [headers.values]
     Content-Type = "text/html; charset=utf-8"
@@ -40,12 +78,23 @@
     X-Content-Type-Options = "nosniff"
 
 [[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate, max-age=0"
+    Pragma = "no-cache"
+    Expires = "0"
+
+# ============ 安全 & 杂项头 ============
+[[headers]]
   for = "/*"
   [headers.values]
     X-Frame-Options = "DENY"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=(), midi=()"
 
+# ============ 重定向 & 兜底：只有真 404 才返回 index.html ============
+# 重要！不要写 /*  /index.html  200 （那个是 SPA fallback，会把 .css/.js 都重写）
+# 只有纯静态文件不存在才返回 index.html（用户手输错路径至少能看到游戏界面）
 [[redirects]]
   from = "/*"
   to = "/index.html"

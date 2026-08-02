@@ -31,6 +31,10 @@
       background: radial-gradient(ellipse at center, #0d0d2b 0%, #050510 100%);
       overflow: hidden;
     }
+    /* ===== 游戏舞台：尺寸 == canvas 尺寸，作为所有内嵌元素的定位上下文（防心脏❤溢出被裁） ===== */
+    #game-stage {
+      position: relative; display: inline-block; line-height: 0; border-radius: 4px;
+    }
     #game-canvas {
       display: block; background: #050510;
       box-shadow: 0 0 10px #00f0ff, 0 0 20px #00f0ff;
@@ -75,7 +79,7 @@
       margin-bottom: 24px;
     }
     /* ===== 顶部 HUD 不让文字堆叠到一起 ===== */
-    #hud { position: absolute; top: 0; left: 0; width: 100%; padding: 12px 20px; z-index: 50; pointer-events: none; }
+    #hud { position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 12px 14px; z-index: 50; pointer-events: none; font-family: 'Orbitron', sans-serif; }
     .hud-top { display: flex; justify-content: space-between; align-items: flex-start; }
     .hud-left { display: flex; flex-direction: column; gap: 8px; }
     .hud-center { text-align: center; }
@@ -127,57 +131,78 @@
 </head>
 <body>
   <div id="game-container">
-    <canvas id="game-canvas"></canvas>
-    
-    <div id="hud" class="hidden">
-      <div class="hud-top">
-        <div class="hud-left">
-          <div class="hud-lives" id="hud-lives"></div>
-          <div class="hud-bombs" id="hud-bombs"></div>
-        </div>
-        <div class="hud-center">
-          <div class="hud-score-label">SCORE</div>
-          <div class="hud-score" id="hud-score">0</div>
-          <!-- ===== BOSS 出现进度条（BOSS COMING 37%） ===== -->
-          <div id="boss-coming-container" class="hidden">
-            <div class="boss-coming-label">
-              <span class="boss-coming-spark">⚠</span>
-              BOSS COMING
-              <span id="boss-coming-percent">0%</span>
-              <span class="boss-coming-spark">⚠</span>
-            </div>
-            <div class="boss-coming-bar">
-              <div class="boss-coming-fill" id="boss-coming-fill"></div>
+    <!-- ============================================================
+         #game-stage：尺寸 == canvas 实际尺寸（小竖屏），作为所有「游戏画面内元素」的定位上下文
+         以前所有元素都直接放在 #game-container（100vw全屏）导致 HUD 相对全屏定位溢出被裁！
+         现在 #hud / canvas / warning / banner / fps 都在 stage 内，宽高永远等于 canvas
+         ============================================================ -->
+    <div id="game-stage">
+      <canvas id="game-canvas"></canvas>
+
+      <div id="hud" class="hidden">
+        <div class="hud-top">
+          <div class="hud-left">
+            <div class="hud-lives" id="hud-lives"></div>
+            <div class="hud-bombs" id="hud-bombs"></div>
+          </div>
+          <div class="hud-center">
+            <div class="hud-score-label">SCORE</div>
+            <div class="hud-score" id="hud-score">0</div>
+            <!-- ===== BOSS 出现进度条（BOSS COMING 37%） ===== -->
+            <div id="boss-coming-container" class="hidden">
+              <div class="boss-coming-label">
+                <span class="boss-coming-spark">⚠</span>
+                BOSS COMING
+                <span id="boss-coming-percent">0%</span>
+                <span class="boss-coming-spark">⚠</span>
+              </div>
+              <div class="boss-coming-bar">
+                <div class="boss-coming-fill" id="boss-coming-fill"></div>
+              </div>
             </div>
           </div>
-        </div>
-        <div class="hud-right">
-          <div class="hud-level" id="hud-level">STAGE 1</div>
-          <div class="hud-combo" id="hud-combo"></div>
-        </div>
-      </div>
-      
-      <div class="hud-bottom">
-        <div class="hud-weapon">
-          <div class="weapon-name" id="weapon-name">LASER</div>
-          <div class="weapon-level" id="weapon-level">Lv.1</div>
-        </div>
-        <div class="hud-energy">
-          <div class="energy-bar">
-            <div class="energy-fill" id="energy-fill"></div>
+          <div class="hud-right">
+            <div class="hud-level" id="hud-level">STAGE 1</div>
+            <div class="hud-combo" id="hud-combo"></div>
           </div>
-          <div class="energy-label">ENERGY</div>
+        </div>
+
+        <div class="hud-bottom">
+          <div class="hud-weapon">
+            <div class="weapon-name" id="weapon-name">LASER</div>
+            <div class="weapon-level" id="weapon-level">Lv.1</div>
+          </div>
+          <div class="hud-energy">
+            <div class="energy-bar">
+              <div class="energy-fill" id="energy-fill"></div>
+            </div>
+            <div class="energy-label">ENERGY</div>
+          </div>
+        </div>
+
+        <div id="boss-hp-container" class="hidden">
+          <div class="boss-name" id="boss-name">BOSS</div>
+          <div class="boss-hp-bar">
+            <div class="boss-hp-fill" id="boss-hp-fill"></div>
+          </div>
         </div>
       </div>
-      
-      <div id="boss-hp-container" class="hidden">
-        <div class="boss-name" id="boss-name">BOSS</div>
-        <div class="boss-hp-bar">
-          <div class="boss-hp-fill" id="boss-hp-fill"></div>
+
+      <div id="warning-overlay" class="hidden">
+        <div class="warning-text">⚠ WARNING ⚠</div>
+      </div>
+
+      <div id="game-banner" class="hidden">
+        <div class="banner-inner">
+          <div class="banner-text" id="game-banner-text">出发喽</div>
         </div>
       </div>
+
+      <div id="fps-display" class="hidden">FPS: 60</div>
     </div>
-    
+    <!-- =============================================== -->
+    <!-- 全屏界面层（覆盖整个浏览器视口，不受 canvas 尺寸限制） -->
+    <!-- =============================================== -->
     <div id="menu-screen" class="screen">
       <div class="menu-content">
         <h1 class="game-title glitch" data-text="CYBER FIGHTER">
